@@ -1,0 +1,144 @@
+:host {
+  display: block;
+  width: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: #222222;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.vpe-panel {
+  box-sizing: border-box;
+  width: 100%;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e5e5e5;
+  background: #ffffff;
+}
+
+.vpe-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+  color: #222222;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.vpe-count {
+  flex-shrink: 0;
+  color: #717171;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.vpe-output {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 40px;
+  padding: 10px 12px;
+  resize: vertical;
+  border: 1px solid #dedede;
+  border-radius: 4px;
+  background: #fafafa;
+  color: #222222;
+  font:
+    13px/1.6 ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Monaco,
+    Consolas,
+    "Liberation Mono",
+    monospace;
+  overflow-wrap: anywhere;
+  transition:
+    border-color 120ms ease,
+    background-color 120ms ease;
+}
+
+.vpe-output:hover {
+  border-color: #bdbdbd;
+}
+
+.vpe-output:focus {
+  border-color: #992b55;
+  outline: 2px solid rgb(153 43 85 / 12%);
+  outline-offset: 1px;
+  background: #ffffff;
+}
+
+.vpe-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.vpe-copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid rgb(0, 119, 130);
+  border-radius: 6px;
+  background: rgb(0, 119, 130);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 375;
+  line-height: 1.25;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
+}
+
+.vpe-copy:hover:not(:disabled) {
+  border-color: #0e7a85;
+  background: #0e7a85;
+}
+
+.vpe-copy:active:not(:disabled) {
+  border-color: #0e7a85;
+  background: #0e7a85;
+}
+
+.vpe-copy:focus-visible {
+  outline: 2px solid #0e7a85;
+  outline-offset: 3px;
+}
+
+.vpe-copy:disabled {
+  border-color: #d7d7d7;
+  background: #e9e9e9;
+  color: #858585;
+  cursor: not-allowed;
+}
+
+.vpe-help {
+  color: #717171;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+@media (max-width: 480px) {
+  .vpe-panel {
+    padding: 12px;
+  }
+
+  .vpe-actions {
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vpe-output,
+  .vpe-copy {
+    transition: none;
+  }
+}

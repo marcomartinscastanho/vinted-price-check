@@ -1,0 +1,14 @@
+{
+  "name": "vinted-price-extractor",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc --noEmit && vite build"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.315",
+    "typescript": "~5.7.2",
+    "vite": "^6.1.0"
+  }
+}

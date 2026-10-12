@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Vinted Seller Price Extractor",
+  "version": "1.0.0",
+  "description": "Extract seller prices from Vinted catalog search results.",
+  "content_scripts": [
+    {
+      "matches": ["https://www.vinted.pt/catalog", "https://www.vinted.pt/catalog?*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
