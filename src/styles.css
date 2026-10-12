@@ -142,3 +142,73 @@
     transition: none;
   }
 }
+
+/* Listing inclusion toggle, styled like Vinted's favourite control */
+.vpe-listing-toggle {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  margin: 8px;
+  padding: 8px;
+  border: 1px solid rgb(242, 242, 242);
+  border-radius: 24px;
+  background-color: rgb(255, 255, 255);
+  color: rgb(90, 101, 102);
+  font-size: 13;
+  font-weight: 400;
+  cursor: pointer;
+  transition:
+    color 120ms ease,
+    background-color 120ms ease;
+}
+
+.vpe-toggle-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  font-weight: 400;
+}
+
+.vpe-toggle-icon svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+}
+
+/* Included: filled teal star */
+.vpe-listing-toggle.is-included {
+  color: rgb(0, 119, 130);
+}
+
+/* Excluded: outlined star */
+.vpe-listing-toggle.is-excluded {
+  color: #777777;
+}
+
+.vpe-listing-toggle.is-excluded .vpe-toggle-icon svg path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.2;
+  stroke-linejoin: round;
+}
+
+.vpe-listing-toggle:hover {
+  background: rgb(245, 253, 255);
+  color: rgb(0, 119, 130);
+}
+
+.vpe-listing-toggle:focus-visible {
+  outline: 2px solid rgb(0 119 130 / 35%);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vpe-listing-toggle {
+    transition: none;
+  }
+}

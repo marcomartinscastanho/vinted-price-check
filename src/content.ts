@@ -1,10 +1,17 @@
+import "./styles.css";
 import styles from "./styles.css?inline";
 
 const HOST_ID = "vinted-price-extractor-host";
+const TOGGLE_CLASS = "vpe-listing-toggle";
 
 interface Listing {
   id: string;
   price: string;
+  card: HTMLElement;
+}
+
+interface ExtractorHost extends HTMLDivElement {
+  updatePrices?: () => void;
 }
 
 function isCatalogPage(): boolean {
@@ -27,11 +34,24 @@ function normalizeSellerPrice(text: string): string | null {
   return amount.toString().replace(".", ",");
 }
 
+/**
+ * Stores inclusion state by Vinted listing ID.
+ * Listings are included by default when first encountered.
+ * This Map is deliberately in-memory only, so a page reload
+ * resets all listings to included.
+ */
+const includedListings = new Map<string, boolean>();
+
+function isListingIncluded(id: string): boolean {
+  return includedListings.get(id) ?? true;
+}
+
 function getListings(): Listing[] {
   const listings = new Map<string, Listing>();
 
   document.querySelectorAll<HTMLElement>('[data-testid="grid-item"]').forEach((card) => {
-    if (card.closest('article[class*="closet__item"], ' + '[data-testid^="closet-item-"]')) {
+    // Ignore seller profile closet items.
+    if (card.closest('article[class*="closet__item"], [data-testid^="closet-item-"]')) {
       return;
     }
 
@@ -52,7 +72,7 @@ function getListings(): Listing[] {
       const price = normalizeSellerPrice(priceElement.textContent ?? "");
 
       if (price !== null && !listings.has(id)) {
-        listings.set(id, { id, price });
+        listings.set(id, { id, price, card });
       }
 
       break;
@@ -70,7 +90,7 @@ function findResultsHeader(): HTMLElement | null {
   if (!resultCount) return null;
 
   return (
-    resultCount.closest<HTMLElement>('div[class*="u-justify-content-between"]' + '[class*="u-align-items-center"]') ??
+    resultCount.closest<HTMLElement>('div[class*="u-justify-content-between"][class*="u-align-items-center"]') ??
     resultCount.parentElement
   );
 }
@@ -78,12 +98,14 @@ function findResultsHeader(): HTMLElement | null {
 function mountPanel(): void {
   if (!isCatalogPage()) return;
 
-  if (document.getElementById(HOST_ID)) {
+  const existingHost = document.getElementById(HOST_ID) as ExtractorHost | null;
+
+  if (existingHost) {
     positionPanel();
     return;
   }
 
-  const host = document.createElement("div");
+  const host = document.createElement("div") as ExtractorHost;
   host.id = HOST_ID;
   host.style.cssText = "display:block;width:100%;box-sizing:border-box";
 
@@ -101,6 +123,7 @@ function mountPanel(): void {
       <span>Seller prices</span>
       <span class="vpe-count">0 items</span>
     </div>
+
     <textarea
       class="vpe-output"
       aria-label="Extracted seller prices"
@@ -108,6 +131,7 @@ function mountPanel(): void {
       rows="1"
       placeholder="Waiting for catalog results..."
     ></textarea>
+
     <div class="vpe-actions">
       <button type="button" class="vpe-copy" disabled>
         Copy prices
@@ -123,24 +147,106 @@ function mountPanel(): void {
   const output = panel.querySelector<HTMLTextAreaElement>(".vpe-output")!;
 
   const count = panel.querySelector<HTMLElement>(".vpe-count")!;
+
   const copyButton = panel.querySelector<HTMLButtonElement>(".vpe-copy")!;
+
   const help = panel.querySelector<HTMLElement>(".vpe-help")!;
 
   let currentOutput = "";
+  let copiedStatusTimer: number | undefined;
 
   function update(): void {
     const listings = getListings();
 
-    currentOutput = listings.map((item) => item.price).join(";");
+    // Add a toggle to every discovered listing and keep its
+    // visual state in sync with the inclusion Map.
+    for (const listing of listings) {
+      addOrUpdateToggle(listing);
+    }
+
+    const included = listings.filter((listing) => isListingIncluded(listing.id));
+
+    currentOutput = included.map((listing) => listing.price).join(";");
 
     output.value = currentOutput;
     output.rows = Math.min(4, Math.max(1, Math.ceil(currentOutput.length / 100)));
 
-    count.textContent = `${listings.length} ${listings.length === 1 ? "item" : "items"}`;
+    count.textContent = `${included.length} ${included.length === 1 ? "item" : "items"}`;
 
-    copyButton.disabled = listings.length === 0;
+    copyButton.disabled = included.length === 0;
+
+    if (copiedStatusTimer !== undefined) {
+      window.clearTimeout(copiedStatusTimer);
+      copiedStatusTimer = undefined;
+    }
+
     copyButton.textContent = "Copy prices";
-    help.textContent = "Seller prices only";
+    help.textContent =
+      included.length === listings.length ? "Seller prices only" : `${listings.length - included.length} excluded`;
+  }
+
+  function addOrUpdateToggle(listing: Listing): void {
+    const existing = listing.card.querySelector<HTMLButtonElement>(`.${TOGGLE_CLASS}[data-listing-id="${listing.id}"]`);
+
+    const toggle = existing ?? document.createElement("button");
+
+    if (!existing) {
+      toggle.type = "button";
+      toggle.className = TOGGLE_CLASS;
+      toggle.dataset.listingId = listing.id;
+      toggle.setAttribute("aria-label", "Toggle whether this listing is included in extracted prices");
+      toggle.setAttribute("title", "Include/exclude price");
+
+      toggle.addEventListener("click", (event) => {
+        // Prevent the click from opening the product or
+        // activating controls elsewhere in the card.
+        event.preventDefault();
+        event.stopPropagation();
+
+        const id = toggle.dataset.listingId;
+        if (!id) return;
+
+        includedListings.set(id, !isListingIncluded(id));
+
+        update();
+      });
+
+      toggle.innerHTML = `
+        <span class="vpe-toggle-icon" aria-hidden="true">
+          <svg
+            fill="none"
+            viewBox="0 0 16 16"
+            width="16"
+            height="16"
+            aria-hidden="true"
+          >
+            <path
+              d="M8 1.25 10.05 5.4l4.58.67-3.31 3.23.78 4.56L8 11.7l-4.1 2.16.78-4.56-3.31-3.23 4.58-.67L8 1.25Z"
+              fill="currentColor"
+              stroke="currentColor"
+              fill-rule="evenodd"
+              clip-rule="evenodd"
+            />
+          </svg>
+        </span>
+      `;
+
+      const buttonsContainer = listing.card.querySelector<HTMLElement>('div[class*="u-position-absolute"]');
+      if (!!buttonsContainer) {
+        buttonsContainer.insertBefore(toggle, buttonsContainer.firstChild);
+      }
+    }
+
+    const included = isListingIncluded(listing.id);
+
+    toggle.classList.toggle("is-included", included);
+    toggle.classList.toggle("is-excluded", !included);
+
+    toggle.setAttribute("aria-pressed", included ? "true" : "false");
+
+    toggle.setAttribute("aria-label", included ? "Exclude from extracted prices." : "Include in extracted prices.");
+
+    toggle.title = included ? "Included" : "Excluded";
   }
 
   copyButton.addEventListener("click", async () => {
@@ -161,22 +267,19 @@ function mountPanel(): void {
     copyButton.textContent = "Copied!";
     help.textContent = "Prices copied to clipboard.";
 
-    window.setTimeout(() => {
+    if (copiedStatusTimer !== undefined) {
+      window.clearTimeout(copiedStatusTimer);
+    }
+
+    copiedStatusTimer = window.setTimeout(() => {
       copyButton.textContent = "Copy prices";
+      copiedStatusTimer = undefined;
     }, 1500);
   });
 
   output.addEventListener("focus", () => output.select());
 
-  // Keep the updater accessible to the observer without
-  // introducing React or a framework-specific state layer.
-  host.dataset.ready = "true";
-
-  shadow.appendChild(document.createComment("Vinted price extractor"));
-
-  // Store the update function on the host for this script.
-  panel.dataset.initialized = "true";
-  (host as HTMLElement & { updatePrices?: () => void }).updatePrices = update;
+  host.updatePrices = update;
 
   document.body.appendChild(host);
   positionPanel();
@@ -193,13 +296,13 @@ function positionPanel(): void {
     if (host.parentElement !== header.parentElement || host.previousElementSibling !== header) {
       header.insertAdjacentElement("afterend", host);
     }
-  } else if (!host.isConnected) {
+  } else if (host.parentElement !== document.body) {
     document.body.prepend(host);
   }
 }
 
 function refresh(): void {
-  const host = document.getElementById(HOST_ID) as (HTMLElement & { updatePrices?: () => void }) | null;
+  const host = document.getElementById(HOST_ID) as ExtractorHost | null;
 
   if (!host) {
     mountPanel();
