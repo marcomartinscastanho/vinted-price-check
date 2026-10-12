@@ -63,8 +63,8 @@
 }
 
 .vpe-output:focus {
-  border-color: #992b55;
-  outline: 2px solid rgb(153 43 85 / 12%);
+  border-color: rgb(0, 119, 130);
+  outline: 2px solid rgb(0 119 130 / 12%);
   outline-offset: 1px;
   background: #ffffff;
 }
