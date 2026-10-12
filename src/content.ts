@@ -64,7 +64,7 @@ function getListings(): Listing[] {
 
 function findResultsHeader(): HTMLElement | null {
   const resultCount = Array.from(document.querySelectorAll<HTMLElement>("span")).find((element) =>
-    /^\d+\s+resultados?\.?$/i.test((element.textContent ?? "").trim()),
+    /^\d+\+*\s+resultados?\.?$/i.test((element.textContent ?? "").trim()),
   );
 
   if (!resultCount) return null;
